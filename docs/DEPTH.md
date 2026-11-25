@@ -2,7 +2,8 @@
 
 - 规模：中型
 - 核心规则：低于检出限按半个检出限代入，单位统一后逐站逐月按流量加权。
-- 样例：`sample_data/dirty.csv` 触发异常，`sample_data/clean.csv` 可完成签发。
+- 汛期规则：上下游水样在登记传播时差窗口内做最大基数配对，净增负荷方向一致才签发。
+- 样例：`sample_data/dirty.csv` 触发异常，`sample_data/clean.csv` 可完成签发，`sample_data/flood.csv` 覆盖河段净增/净减/待核，`sample_data/reaches.csv` 登记河段与传播时差。
 
 ## 功能模块
 
@@ -12,9 +13,10 @@
 | M2 领域整理 | 解析字段与单位，隔离不满足前置条件的行 | `POST /api/stages/prepare` | `app/domain/prepare.py` | `tests/test_prepare.py` |
 | M3 核心计算 | 执行项目核心规则并生成可比指标 | `POST /api/stages/calculate` | `app/domain/calculate.py` | `tests/test_calculate.py` |
 | M4 规则判定 | 给出通过、复核或阻断结论 | `POST /api/stages/decision` | `app/domain/decision.py` | `tests/test_decision.py` |
-| M5 运行对账 | 核对来源行、采信、隔离、重复与计算条目 | `POST /api/stages/reconcile` | `app/reconcile/ledger.py` | `tests/test_reconcile.py` |
+| M5 运行对账 | 核对来源行、采信、隔离、重复、计算条目与河段方向 | `POST /api/stages/reconcile` | `app/reconcile/ledger.py`、`app/domain/reaches.py` | `tests/test_reconcile.py`、`tests/test_reaches.py` |
 | M6 批次复核 | 带版本号签发或暂缓，拒绝陈旧复核 | `POST /api/runs/{id}/review` | `app/review/service.py` | `tests/test_review.py` |
 | M7 证据交付 | 仅在签发后输出可校验的复核证据 | `GET /api/runs/{id}/evidence` | `app/evidence/render.py` | `tests/test_evidence.py` |
+| M8 河段评估 | 最大基数配对与净增负荷方向稳健性 | `GET /api/reaches` | `app/domain/reaches.py` | `tests/test_reach_http.py` |
 
 ## 输入陷阱
 
@@ -35,4 +37,4 @@
 
 ## 深度边界
 
-采信层区分编码、重复表头、列数、空值、全角字符、前导零与冲突重复；整理层负责单位和字段边界；计算层执行核心规则；判定层保留原因码；对账层要求来源行等于采信、隔离、重复和忽略之和；复核层使用版本号阻止陈旧签发。
+采信层区分编码、重复表头、列数、空值、全角字符、前导零与冲突重复；整理层负责单位和字段边界；计算层执行核心规则；判定层保留原因码；对账层要求来源行等于采信、隔离、重复和忽略之和，并校验河段净增负荷方向一致；复核层使用版本号阻止陈旧签发，待核河段阻断签发。

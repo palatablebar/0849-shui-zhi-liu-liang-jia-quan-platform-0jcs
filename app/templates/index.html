@@ -19,6 +19,15 @@
       <div class="panel-head"><h2>指标分布</h2><span class="hint" id="chart-label"></span></div>
       <div id="chart" class="chart"></div>
     </article>
+    <article class="panel" id="panel-reaches">
+      <div class="panel-head"><h2>汛期河段净增负荷</h2><span class="hint" id="reach-count">--</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>河段</th><th>上游→下游</th><th>时差窗口(h)</th><th>配对</th><th>净增负荷</th><th>结论</th></tr></thead>
+          <tbody id="reach-body"></tbody>
+        </table>
+      </div>
+    </article>
     <article class="panel" id="panel-issues">
       <div class="panel-head"><h2>异常与隔离</h2><span class="hint" id="issue-count">--</span></div>
       <ul class="issues" id="issue-list"></ul>

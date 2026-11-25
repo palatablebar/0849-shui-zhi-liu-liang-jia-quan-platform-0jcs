@@ -18,6 +18,12 @@ MESSAGES = {
     "GATE_BLOCKED": "存在阻断项，不能签发",
     "NOT_APPROVED": "批次尚未签发",
     "BAD_REQUEST": "请求内容不完整",
+    "REACH_REGISTRY_MISSING": "河段登记表缺失",
+    "REACH_REGISTRY_EMPTY": "河段登记表没有有效河段",
+    "REACH_BAD_ROW": "河段登记表行不合法",
+    "REACH_DUPLICATE": "河段登记编号重复",
+    "REACH_BAD_LAG": "河段传播时差窗口不合法",
+    "REACH_MATCHING_FAILED": "河段配对计算失败",
 }
 
 

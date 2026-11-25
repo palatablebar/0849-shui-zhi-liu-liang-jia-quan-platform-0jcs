@@ -1,7 +1,8 @@
 from flask import Blueprint, abort, jsonify, request, send_file
 
 from app.catalog import SPEC
-from app.config import SAMPLES
+from app.config import PROFILES, REACH_REGISTRY, SAMPLES
+from app.domain.reaches import load_registry
 from app.errors import DomainIssue
 from app.evidence.render import render
 from app.review.service import approve, create_run, serialize
@@ -25,7 +26,7 @@ def catalog():
                        ["intake", "prepare", "calculate", "decision", "reconcile", "review", "evidence"],
                        SPEC["stages"])],
                    chart=SPEC["chart"], result_columns=SPEC["result_columns"],
-                   columns=SPEC["columns"], samples=["dirty", "clean"])
+                   columns=SPEC["columns"], samples=list(PROFILES))
 
 
 @api.post("/api/stages/<stage_id>")
@@ -70,6 +71,17 @@ def evidence(run_id):
 
 @api.get("/api/examples/<profile>")
 def example(profile):
-    if profile not in {"clean", "dirty"}:
+    if profile not in PROFILES:
         abort(404)
     return send_file(SAMPLES / f"{profile}.csv", as_attachment=True)
+
+
+@api.get("/api/reaches")
+def reaches():
+    """工作台可查河段结论：按样例返回登记河段的净增负荷评估。"""
+    profile = request.args.get("profile", "flood")
+    if profile not in PROFILES:
+        raise DomainIssue("SAMPLE_UNKNOWN")
+    payload = pipeline(profile)
+    return jsonify(profile=profile, registry=load_registry(REACH_REGISTRY),
+                   reaches=payload["reaches"], reach_summary=payload["reach_summary"])

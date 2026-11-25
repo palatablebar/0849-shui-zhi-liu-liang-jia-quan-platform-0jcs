@@ -3,9 +3,11 @@ from decimal import Decimal
 from pathlib import Path
 
 from app.catalog import SPEC
+from app.config import REACH_REGISTRY
 from app.domain.calculate import calculate_rows
 from app.domain.decision import decide_rows
 from app.domain.prepare import prepare_rows
+from app.domain.reaches import assess_reaches, load_registry
 from app.intake.service import load
 from app.reconcile.ledger import build_ledger
 
@@ -31,6 +33,7 @@ def pipeline(profile="dirty", path=None, upto="证据交付"):
     prepared, prepare_issues = [], []
     results = []
     ledger = None
+    reach_results = []
     if _stage(upto) >= 2:
         prepared, prepare_issues = prepare_rows(intake["rows"])
     if _stage(upto) >= 3:
@@ -38,7 +41,8 @@ def pipeline(profile="dirty", path=None, upto="证据交付"):
     if _stage(upto) >= 4:
         results = decide_rows(results)
     if _stage(upto) >= 5:
-        ledger = build_ledger(intake, prepared, prepare_issues, results)
+        reach_results = assess_reaches(load_registry(REACH_REGISTRY), prepared)
+        ledger = build_ledger(intake, prepared, prepare_issues, results, reach_results)
     intake["counts"]["prepared"] = len(prepared)
     intake["counts"]["computed"] = len(results)
     issues = intake["issues"] + prepare_issues
@@ -61,6 +65,9 @@ def pipeline(profile="dirty", path=None, upto="证据交付"):
                          if key in {"label", "verdict", "reason", "metric", "limit", "status", "state", "breakdown"}
                          or key in SPEC["columns"] or key in SPEC["result_columns"]})
     source = {"profile": profile, "filename": Path(intake["path"]).name, "sha256": intake["sha256"]}
+    reach_summary = {"INCREASE": 0, "DECREASE": 0, "REVIEW": 0}
+    for item in reach_results:
+        reach_summary[item["conclusion"]] += 1
     payload = {
         "project": SPEC["code"] + " " + SPEC["name"],
         "rule": SPEC["rule_short"],
@@ -73,6 +80,8 @@ def pipeline(profile="dirty", path=None, upto="证据交付"):
         "chart": chart,
         "summary": summary,
         "ledger": ledger,
+        "reaches": reach_results,
+        "reach_summary": reach_summary,
         "stages": [{"id": "intake", "name": SPEC["stages"][0]},
                    {"id": "prepare", "name": SPEC["stages"][1]},
                    {"id": "calculate", "name": SPEC["stages"][2]},

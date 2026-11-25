@@ -17,6 +17,8 @@ def render(run):
         "counts": run["counts"],
         "ledger": run["ledger"],
         "summary": run["summary"],
+        "reach_summary": run.get("reach_summary", {"INCREASE": 0, "DECREASE": 0, "REVIEW": 0}),
+        "reaches": run.get("reaches", []),
         "review": {"status": run["status"], "revision": run["revision"], "comment": run["comment"]},
     }
     artifact["artifact_sha256"] = stable_digest(artifact)

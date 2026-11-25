@@ -43,6 +43,23 @@
       return '<tr>' + values + verdict + breakdown + '</tr>';
     }).join('') : '<tr><td class="empty" colspan="' + (keys.length + (source ? 0 : 1)) + '">没有可展示条目</td></tr>';
   }
+  function renderReaches(data) {
+    var reaches = data.reaches || [];
+    $('reach-count').textContent = reaches.length ?
+      (data.reach_summary.INCREASE + ' 净增 / ' + data.reach_summary.DECREASE + ' 净减 / ' + data.reach_summary.REVIEW + ' 待核') : '--';
+    $('reach-body').innerHTML = reaches.length ? reaches.map(function (reach) {
+      var net = reach.net_load === null || reach.net_load === undefined ? '—' : reach.net_load;
+      var label = {INCREASE: '净增', DECREASE: '净减', REVIEW: '待核'}[reach.conclusion] || reach.conclusion;
+      return '<tr>' +
+        '<td>' + esc(reach.reach_id) + '</td>' +
+        '<td>' + esc(reach.upstream_station) + ' → ' + esc(reach.downstream_station) + '</td>' +
+        '<td class="num">' + esc(reach.lag_min_hours) + '–' + esc(reach.lag_max_hours) + '</td>' +
+        '<td class="num">' + esc(reach.pair_count) + '</td>' +
+        '<td class="num">' + esc(net) + (reach.pair_count ? '<br><small>[' + esc(reach.net_load_min) + ', ' + esc(reach.net_load_max) + ']</small>' : '') + '</td>' +
+        '<td><span class="verdict" data-v="' + (reach.signable ? 'PASS' : 'REVIEW') + '">' + label + '</span><br><small>' + esc(reach.reason) + '</small></td>' +
+      '</tr>';
+    }).join('') : '<tr><td class="empty" colspan="6">本样例暂无登记河段</td></tr>';
+  }
   function renderLedger(data) {
     if (!data.ledger) { $('ledger-list').innerHTML = '<p class="empty">运行对账后显示</p>'; return; }
     var values = data.ledger;
@@ -62,6 +79,7 @@
     $('m-rejected').textContent = data.summary.REJECT;
     renderRows(data);
     renderIssues(data);
+    renderReaches(data);
     renderLedger(data);
     window.renderChart($('chart'), data.chart && data.chart.length ? (state.kind || 'bars') : 'bars', data.chart || []);
   }
@@ -85,6 +103,10 @@
     } catch (error) { setNotice(error.message); }
     finally { document.body.removeAttribute('aria-busy'); }
   }
+  function gateBlocked(run) {
+    return (run.summary && run.summary.REJECT > 0) ||
+           (run.reach_summary && run.reach_summary.REVIEW > 0);
+  }
   async function runBatch() {
     try {
       setNotice('');
@@ -95,7 +117,7 @@
       render(run);
       $('run-status').textContent = run.status + ' · rev ' + run.revision;
       $('revision').textContent = 'rev ' + run.revision;
-      $('sign').disabled = run.summary.REJECT > 0 || state.approved;
+      $('sign').disabled = gateBlocked(run) || state.approved;
       $('hold').disabled = state.approved;
       $('download').hidden = !state.approved;
       if (state.approved) $('download').href = '/api/runs/' + run.run_id + '/evidence';

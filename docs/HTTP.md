@@ -7,5 +7,6 @@
 - `GET /api/runs/{id}`：读取批次。
 - `POST /api/runs/{id}/review`：签发或暂缓，提交 `decision`、`comment`、`expected_revision`。
 - `GET /api/runs/{id}/evidence`：下载已签发证据。
-- `GET /api/examples/{profile}`：下载样例。
+- `GET /api/examples/{profile}`：下载样例（`dirty` / `clean` / `flood`）。
+- `GET /api/reaches?profile=flood`：查询登记河段的净增负荷结论与配对明细。
 - `GET /healthz`：健康检查。

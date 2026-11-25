@@ -2,7 +2,7 @@ from collections import OrderedDict
 from pathlib import Path
 
 from app.catalog import SPEC
-from app.config import SAMPLES
+from app.config import PROFILES, SAMPLES
 from app.errors import DomainIssue
 from app.intake.limits import MAX_FILE, MAX_ROWS
 from app.intake.reader import read_records
@@ -11,7 +11,7 @@ from app.intake.reader import read_records
 def _path(profile: str, path: str | None):
     if path:
         return Path(path)
-    if profile not in {"clean", "dirty"}:
+    if profile not in PROFILES:
         raise DomainIssue("SAMPLE_UNKNOWN")
     return SAMPLES / f"{profile}.csv"
 
